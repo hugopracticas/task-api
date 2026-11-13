@@ -1,0 +1,44 @@
+##Define los servicios de nuestra aplicación
+services:
+  ##Nombre del servicio
+  task-api:
+    ##Indica dónde está el código para construir la imagen
+    build:
+      context: .
+      ##Indica qué Dockerfile utilizar
+      dockerfile: Dockerfile
+    ##Nombre y etiqueta de la imagen
+    image: task-api:v2
+    ports:
+      ##Publica el puerto 3001
+      - "3001:3001"
+    ## Permite reiniciar el contenedor automáticamente bajo determinadas condiciones
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ##Es el directorio dentro del contenedor donde PostgresSQL almacena los archivos de su cluster de base de datos
+    ##Por lo tanto, cuando PostgresSQL escribe informacion en ese directorio, los datos se conservan en el volumen de Docker
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d tasksdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes: ## Esta declaacion indica a docker composeque debe de administrar un volumen llamado postgres_data
+  postgres_data:
