@@ -1,0 +1,31 @@
+name: Task API - CI   ##Es el nombre que aparecerá en GitHub Actions.
+
+on:
+  push:
+    branches: [main]  ##Indica cuándo debe ejecutarse nuestro workflow.
+  pull_request:       ##En este caso, se activará cuando enviemos cambios a main o cuando se abra o actualice un Pull Request dirigido a main.
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Node.js Application
+    runs-on: ubuntu-latest   ##GitHub proporcionará un entorno Linux donde ejecutaremos nuestras instrucciones. (Duda)
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v6  ##Descarga el código del repositorio al runner
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7  ##Configura Node.js 24
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci   ##Instala las dependencias del proyecto
+
+      - name: Verificar sintaxis
+        run: npm run check   ##Ejecuta nuestro script de validación
