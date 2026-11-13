@@ -36,7 +36,7 @@ app.get('/db-health', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al conectar con PostgreSQL:', error.message);
+        console.error('Error al conectar con PostgreSQL, favor de revisar:', error.message);
 
         res.status(503).json({
             status: 'ERROR',
