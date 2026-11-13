@@ -29,3 +29,15 @@ jobs:
 
       - name: Verificar sintaxis
         run: npm run check   ##Ejecuta nuestro script de validación
+      
+      - name: Conocer el sistema operativo
+        run: cat /etc/os-release
+
+      - name: Verificar dónde estamos
+        run: pwd && ls -la
+
+      - name: Consultar versiones
+        run: node -v && npm -v
+
+      - name: Identificar usuario
+        run: whoami
