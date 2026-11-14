@@ -1,9 +1,9 @@
-name: Task API - CI   ##Es el nombre que aparecerá en GitHub Actions.
+name: Task API - CI ##Es el nombre que aparecerá en GitHub Actions.
 
 on:
   push:
-    branches: [main]  ##Indica cuándo debe ejecutarse nuestro workflow.
-  pull_request:       ##En este caso, se activará cuando enviemos cambios a main o cuando se abra o actualice un Pull Request dirigido a main.
+    branches: [main] ##Indica cuándo debe ejecutarse nuestro workflow.
+  pull_request:      ##En este caso, se activará cuando enviemos cambios a main o cuando se abra o actualice un Pull Request dirigido a main.
     branches: [main]
 
 permissions:
@@ -11,33 +11,70 @@ permissions:
 
 jobs:
   validate:
-    name: Validate Node.js Application
-    runs-on: ubuntu-latest   ##GitHub proporcionará un entorno Linux donde ejecutaremos nuestras instrucciones. (Duda)
+    name: Test Task API
+    runs-on: ubuntu-latest  ##GitHub proporcionará un entorno Linux donde ejecutaremos nuestras instrucciones. (Duda)
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: tasksdb
+      DB_USER: taskuser
+      DB_PASSWORD: testpassword
+      PORT: 3001
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: taskuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: tasksdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taskuser -d tasksdb"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Descargar repositorio
-        uses: actions/checkout@v6  ##Descarga el código del repositorio al runner
+        uses: actions/checkout@v6         ##Descarga el código del repositorio al runner
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v7  ##Configura Node.js 24
+        uses: actions/setup-node@v7       ##Configura Node.js 24
         with:
           node-version: '24'
           cache: 'npm'
 
       - name: Instalar dependencias
-        run: npm ci   ##Instala las dependencias del proyecto
+        run: npm ci                       ##Instala las dependencias del proyecto
 
       - name: Verificar sintaxis
-        run: npm run check   ##Ejecuta nuestro script de validación
-      
-      - name: Conocer el sistema operativo
-        run: cat /etc/os-release
+        run: npm run check                ##Ejecuta nuestro script de validación
 
-      - name: Verificar dónde estamos
-        run: pwd && ls -la
+      - name: Preparar base de datos
+        run: npm run db:init
 
-      - name: Consultar versiones
-        run: node -v && npm -v
+      - name: Iniciar Task API
+        run: |
+          npm start > /tmp/task-api.log 2>&1 &
+          echo $! > /tmp/task-api.pid
 
-      - name: Identificar usuario
-        run: whoami
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:3001/health > /dev/null; then
+              echo "API lista"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          cat /tmp/task-api.log
+          exit 1
+
+      - name: Ejecutar pruebas
+        run: npm test
+
+      - name: Mostrar logs de la API
+        if: always()
+        run: cat /tmp/task-api.log || true
