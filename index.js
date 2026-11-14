@@ -7,23 +7,23 @@ app.use(express.json());
 
 const PORT = 3001;
 
-let tasks = [
-    {
-        id: 1,
-        title: "Estudiar Linux",
-        completed: true
-    },
-    {
-        id: 2,
-        title: "Aprender Docker",
-        completed: false
-    },
-    {
-        id: 3,
-        title: "Practicar Kubernetes",
-        completed: false
-    }
-];
+// let tasks = [
+//     {
+//         id: 1,
+//         title: "Estudiar Linux",
+//         completed: true
+//     },
+//     {
+//         id: 2,
+//         title: "Aprender Docker",
+//         completed: false
+//     },
+//     {
+//         id: 3,
+//         title: "Practicar Kubernetes",
+//         completed: false
+//     }
+// ];
 
 app.get('/db-health', async (req, res) => {
     try {
@@ -106,6 +106,38 @@ app.get('/tasks', async (req, res) => {
 //     res.status(201).json(newTask);
 
 // });
+
+app.get('/tasks/:id', async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id) || id < 1) {
+            return res.status(400).json({
+                message: 'ID inválido'
+            });
+        }
+
+        const result = await pool.query(
+            'SELECT id, title, completed FROM tasks WHERE id = $1',
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: 'Tarea no encontrada'
+            });
+        }
+
+        return res.status(200).json(result.rows[0]);
+
+    } catch (error) {
+        console.error('Error al consultar tarea:', error.message);
+
+        return res.status(500).json({
+            message: 'Error al consultar la tarea'
+        });
+    }
+});
 app.post('/tasks', async (req, res) => {
     try {
         const { title } = req.body;
