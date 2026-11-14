@@ -74,17 +74,17 @@ app.get('/tasks', async (req, res) => {
     }
 });
 
-app.get('/tasks/:id', (req, res) => {
-    const idTask = Number(req.params.id);
-    const getTask = tasks.find((task) => task.id === idTask);
+// app.get('/tasks/:id', (req, res) => {
+//     const idTask = Number(req.params.id);
+//     const getTask = tasks.find((task) => task.id === idTask);
 
-    if(!getTask){
-        return res.status(404).json({
-            message: 'Tarea no encontrada'
-        })
-    }
-    res.json(getTask);
-});
+//     if(!getTask){
+//         return res.status(404).json({
+//             message: 'Tarea no encontrada'
+//         })
+//     }
+//     res.json(getTask);
+// });
 
 // app.post('/tasks', (req, res) => {
 
